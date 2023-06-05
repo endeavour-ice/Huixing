@@ -79,29 +79,29 @@ mybatis-plus:
 aliyun:
   oss:
     file:
-      endpoint: oss-cn-hangzhou.aliyuncs.com
-      keyid: LTAI5tN1Ga2AehUD3HWyprsx
-      keysecret: QpK6KNMFoZdS8koHCDu5zvGc1ZTojN
-      bucketname: bing-edu
+      endpoint: ${aliyun.oss.file.endpoint}
+      keyid: ${aliyun.oss.file.keyid}
+      keysecret: ${aliyun.oss.file.keysecret}
+      bucketname: ${aliyun.oss.file.bucketname}
 email:
-  fromEmail: verification_ice@qq.com
-  password: epkpjdtspfxxebae
+  fromEmail: ${email.fromEmail}
+  password: ${email.password}
 
 chatGpt:
-  token: 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
+  token: ${chatGpt.token}
 
 wx:
-  appId: wxe4200ec75d19d998
-  appsecret: 5f119cb27f7fbfd3afbaf9698cda88fe
+  appId: ${wx.appId}
+  appsecret: ${wx.appsecret}
 qq:
-  id: 1573
-  key: 0473f83608b35993b558c751e77649b7
+  id: ${qq.id}
+  key: ${qq.key}
 
 token:
-  secret: ukc8!@BDbRigUDaY6pZFfWus2jZWLPHO
+  secret: ${token.secret}
 zfb:
-  appId: 9021000122679711
-  merchantPrivateKey: MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCzVmfs9SwJlI3ABdAHNYmg97egkpo+URKj7eG2bRiK24O5Ipq/oldQUU+NPcC/26DaHmvZzAj+aahmxTZpVQIarZIRFJseif5BfQeT5Fy9WUcbTSV1Yb7ki7DRK9I/IuMRUwuyp/xr+4YA9+8kHllFiRmon88nNYtyHjUSx2yLnMaP7VUWivP7yJOH75WEY9913iFv9q3/qbCKiG82Kpu/xC/1TEYrt/RV0R7h3zLVNaKI7hMN24lSqiYc2qMr5HB1c5neIET1YR/vc2XHWw5Hh6aSdCDqvPuBXdYaAkHvcLZUwzZZVQiNagT9+gNAGr3sVaXXAbtGt7kvZeXbPevZAgMBAAECggEAD64EVCFzgjrs0dcwQxEZQWunMHDg74XjHVYVIAAV3z4mHC+8W/jzrWAOlojJq3ymaauzPk2qk6PlR2cCxN7b2j1GwhuNHHRwOIWX/gQ/X4bIwshR+Btdt1nHUeKE9WQ1ejRKl4o8dax+IOOMkxncMEo2Zhni4Mi7snSVq1ioUuRyqy6sBs33sQDPQC76+NXvQpUr5dyALI5c7FqTS7EqVRmGDA1RDNMNBtaeEIEmlYAJ5QqGHmieLV5nEtflNr1CWP3OuIF8N9Uvod3Bc9SAPWO0cb34FaM9v4Y4FDvKU2gYST2i2HZ28+O0T1I/Cn6DS4cogr5OJGydOT25IyFdoQKBgQDhsYoCVDGvh/ZhZ+E7lB3r4wPDaSH5VMoa2oIc2Zr7AERqvhc9i5z4YcOkmmQ6bcFi8kVvtJR74sYPP6GuCGbkq5245UzlLXlaaP8UDEkosZVJ8mGNjQNxursLCI4qmTN7pHR/iWbDVPjuDN5kg2tEi4jFPzTKlgGKl5s34uR6jQKBgQDLa1RB++SjTaT4oETlKSbDNbn/4/cEJUPGLMkhNGud91oZ2mWA+rTFAWHgiix3+RLhF8HIvxvHYkiA9hvqNYTTFPm5BED6wG0csB7tUKarJyZfmUNe7sbhIVT7vvw9+Uq8SDaVqEnLl+6fm6kNPDbEE5P0+FsnEw6RsXvDSaOpfQKBgBKusJ7qu0Yteg6sG6/j3eo124zkegR6qVQ5vEWJGdQnPIKdg6z7jp3c8eYBRcS0ayq2pVrO1u++YOjIOqj+Vw4cyqyQhqH99qquQFc3gSLWOGZrovmlr6BNdcg/CA2sqt9USLR5+kC3GvgRpqMpYcrFxieVyNfwPOZtEFM6+/DNAoGBAMGqtrZ3lo9vbeAT3mP7EN+LuEELDfNRczwrCXZmjQsBIzQ3/KmWhyKFFWWMx5eVeEb7slBouo7SYMr/BUavm3zHnJVsmlzhdUB54Yf5YCTVCjC8Hysz0/8lF97yTv7F6ERn0Cgd59xBEzu8HG/wYwe8yAHTrhz+hMFrI7Si2IGVAoGBAMmAT+NoAJFbJ9az/w2GyTOZh/NaU8rwSZNCkUmzwIWLG9w021acGUZKlYduGTeN55pes6hKD3EB4W77E7Z5+jNVQnC49jfcbuLA6FkV7C/s2hcNpmNzWs+ll++wGXlyRMeVTho+sJ2cb2rw85kLBU1MTtt5s9QTaijxTwlDThyN
-  alipayPublicKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmbgZubarbwROwfnO9RGgbgNkgohK0RjFG9mbvsCuMVl0id50+PuAuWcCBlP3bt/hw253XVkytoHZl0WYiofaicqqVbTriTv5tWA9VFyVOPIP/N9wYhG1dQS9vmKsjZYXTep4RsupC3QNYtWB6VT9z1pbCr5zyLcD7AKALZYIXRu7WFYfiQcvilHv8+32dBGSQNh08cD1PJpqLuTN3yjPD7VkVoV7iza7QpAQGGSM8jecfwRB99GZcrysZMa2sWaFrin4gNMkZIqbbguCqGB+K5pU36KgOiFxV5lm8fxAqAeoLpU0BlbUC3DS6cG9wcdLW2HUGbp8pMWDmPEXs3T6SQIDAQAB
-  notifyUrl: ""
-  returnUrl: ""
+  appId: ${zfb.appId}
+  merchantPrivateKey: ${zfb.merchantPrivateKey}
+  alipayPublicKey: ${zfb.alipayPublicKey}
+  notifyUrl: ${zfb.notifyUrl}
+  returnUrl: ${zfb.returnUrl}
