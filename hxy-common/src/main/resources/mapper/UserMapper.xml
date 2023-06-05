@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ice.hxy.mapper.UserMapper">
+
+    <resultMap id="resultUserAvatarVo" type="com.ice.hxy.mode.entity.vo.UserAvatarVo">
+        <id property="id" column="id"/>
+        <result property="username" column="user_account"/>
+        <result property="avatarUrl" column="avatar_url"/>
+    </resultMap>
+    <insert id="saveFriend">
+        insert into user_friend
+        values (#{id}, #{userId}, #{friendId}, null, CURRENT_TIMESTAMP, 0)
+    </insert>
+    <select id="getUserAvatarVoByIds" resultMap="resultUserAvatarVo">
+        select id, user_account , avatar_url
+        from `user`
+        where
+        <if test="ids !=null and ids.size()>0">
+            <foreach collection="ids" item="id" separator="," open="id in (" close=") and">
+                #{id}
+            </foreach>
+        </if>
+        is_delete=0;
+    </select>
+    <select id="getUserCount" resultType="java.lang.Long">
+        select count(1)
+        from `user`
+        where is_delete = 0;
+    </select>
+    <resultMap id="userVo" type="com.ice.hxy.mode.entity.vo.UserVo">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="userAccount" column="user_account"/>
+        <result property="avatarUrl" column="avatar_url"/>
+        <result property="gender" column="gender"/>
+        <result property="tel" column="tel"/>
+        <result property="email" column="email"/>
+        <result property="tags" column="tags"/>
+        <result property="userStatus" column="user_status"/>
+        <result property="profile" column="profile"/>
+        <result property="role" column="role"/>
+        <result property="planetCode" column="planet_code"/>
+        <result property="createTime" column="create_time"/>
+    </resultMap>
+    <resultMap id="SUP" type="com.ice.hxy.mode.resp.SafetyUserResponse">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="userAccount" column="user_account"/>
+        <result property="avatarUrl" column="avatar_url"/>
+        <result property="gender" column="gender"/>
+        <result property="tel" column="tel"/>
+        <result property="email" column="email"/>
+        <result property="tags" column="tags"/>
+        <result property="status" column="user_status"/>
+        <result property="profile" column="profile"/>
+    </resultMap>
+    <select id="selectFindByUserAccountLikePage" resultMap="SUP">
+        <include refid="userVoFromUser"/>
+        <choose>
+            <when test="pageNum>=700000">
+                where id>= (select id from `user` limit #{pageNum},1) limit #{pageSize}
+            </when>
+            <when test="userName!=null and userName!=''">
+                where user_account like #{userName}"%" limit #{pageNum},#{pageSize}
+            </when>
+            <otherwise>
+                limit #{pageNum},#{pageSize} and is_delete=0
+            </otherwise>
+        </choose>
+
+
+    </select>
+    <select id="selectByNameLike" resultMap="SUP">
+        <include refid="userVoFromUser"/>
+        where user_account = #{name} and is_delete=0
+    </select>
+    <select id="selectUserVoList" resultMap="SUP">
+        <include refid="userVoFromUser"/>
+        where is_delete=0 and user_status=#{status} order by create_time asc limit #{current},#{size}
+    </select>
+    <select id="getUserAvatarVoById" resultMap="resultUserAvatarVo">
+        <if test="id!=null and id!=''">
+            select id, user_account, avatar_url
+            from `user`
+            where is_delete=0 and id=#{id}
+        </if>
+
+    </select>
+    <select id="selectByLogin" resultType="com.ice.hxy.mode.entity.User">
+        <if test="userAccount!=null and userAccount!='' and passwordMD5!=null and passwordMD5!=''">
+            select `id`,
+            `username`,
+            `user_account`,
+            `avatar_url`,
+            `gender`,
+            `password`,
+            `tel`,
+            `email`,
+            `profile`,
+            `planet_code`,
+            `tags`,
+            `user_status`,
+            `role`,
+            `is_delete`,
+            `create_time`,
+            `update_time`
+            from `user`
+            where is_delete = 0 and (user_account=#{userAccount} or tel=#{userAccount} or email=#{userAccount}) and
+            password=#{passwordMD5};
+        </if>
+
+    </select>
+
+    <sql id="userVoFromUser">
+        select id,
+               username,
+               user_account,
+               avatar_url,
+               gender,
+               profile,
+               tel,
+               email,
+               tags,
+               user_status,
+               planet_code
+        from `user`
+    </sql>
+
+</mapper>

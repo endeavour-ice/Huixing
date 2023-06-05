@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ice.hxy.mapper.ChatRecordMapper">
+
+
+    <update id="updateReadBatchById">
+
+        update chat_record
+        set has_read=1
+        where is_delete=0 and id in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </update>
+    <select id="selectAllByUserIdAndFriendId" resultType="com.ice.hxy.mode.entity.ChatRecord">
+        select id,
+               user_id,
+               status,
+               send_time,
+               message
+        from chat_record
+        where user_id = #{uid}
+          and accept_id = #{fid}
+          and is_delete = 0
+          AND send_time &lt; #{time,javaType=java.time.LocalDateTime}
+        union all
+        select id,
+               user_id ,
+               status,
+               send_time ,
+               message
+        from chat_record
+        where user_id = #{fid}
+          and accept_id = #{uid}
+          and is_delete = 0
+          AND send_time &lt; #{time,javaType=java.time.LocalDateTime}
+        order by send_time DESC LIMIT 20
+    </select>
+    <select id="selectUserAddFriend" resultType="java.lang.Integer">
+        SELECT count(1)
+        from user_friend
+        WHERE is_delete = 0
+          and ((user_id = #{userId} and accept_id = #{friendId})
+            or (user_id = #{friendId} and accept_id = #{userId}))
+
+    </select>
+</mapper>

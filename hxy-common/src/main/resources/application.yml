@@ -1,0 +1,107 @@
+spring:
+  servlet:
+    multipart:
+      max-file-size: 1024MB
+      max-request-size: 1024MB
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  profiles:
+    active: dev
+#  config:
+#    activate:
+#      on-profile:
+#        - dev
+  application:
+    name: user-center
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${mysql.ip}:${mysql.port}/${mysql.db}?serverTimezone=GMT%2B8
+    username: ${mysql.username}
+    password: ${mysql.password}
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      # 初始化时建立物理连接的个数
+      initial-size: 10
+      # 最小连接池数量
+      min-idle: 10
+      #最大连接池数量
+      maxActive: 200
+      # 获取连接时最大等待时间，单位毫秒。配置了maxWait之后，缺省启用公平锁，并发效率会有所下降，
+      # 如果需要可以通过配置use-unfair-lock属性为true使用非公平锁。
+      maxWait: 60000
+      # 是否缓存preparedStatement，也就是PSCache。PSCache对支持游标的数据库性能提升巨大，比如说oracle。在mysql下建议关闭。
+      poolPreparedStatements: false
+      # 要启用PSCache，必须配置大于0，当大于0时，poolPreparedStatements自动触发修改为true。在Druid中，不会存在Oracle下PSCache占用内存过多的问题，可以把这个数值配置大一些，比如说100
+      maxPoolPreparedStatementPerConnectionSize: -1
+      use-unfair-lock: true
+  #  session 失效时间
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  session:
+    timeout: 86400
+    store-type: none
+  redis:
+    host: ${redis.host}
+    port: ${redis.port}
+    timeout: 1800000
+    database: 0
+    lettuce:
+      pool:
+        max-active: 20
+        max-wait: 1
+  rabbitmq:
+    username: ${rabbitmq.username}
+    password: ${rabbitmq.password}
+    host: ${rabbitmq.host}
+    port: ${rabbitmq.port}
+    publisher-confirm-type: correlated
+    publisher-returns: true
+
+server:
+  port: 8080
+  address: 0.0.0.0
+  servlet:
+    context-path: /py
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+  #    日志
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl #开启sql日志
+  global-config:
+    db-config:
+      logic-delete-field: flag # 全局逻辑删除的实体字段名(since 3.3.0,配置后可以忽略不配置步骤2)
+      logic-delete-value: 1 # 逻辑已删除值(默认为 1)
+      logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
+aliyun:
+  oss:
+    file:
+      endpoint: oss-cn-hangzhou.aliyuncs.com
+      keyid: LTAI5tN1Ga2AehUD3HWyprsx
+      keysecret: QpK6KNMFoZdS8koHCDu5zvGc1ZTojN
+      bucketname: bing-edu
+email:
+  fromEmail: verification_ice@qq.com
+  password: epkpjdtspfxxebae
+
+chatGpt:
+  token: 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
+
+wx:
+  appId: wxe4200ec75d19d998
+  appsecret: 5f119cb27f7fbfd3afbaf9698cda88fe
+qq:
+  id: 1573
+  key: 0473f83608b35993b558c751e77649b7
+
+token:
+  secret: ukc8!@BDbRigUDaY6pZFfWus2jZWLPHO
+zfb:
+  appId: 9021000122679711
+  merchantPrivateKey: MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCzVmfs9SwJlI3ABdAHNYmg97egkpo+URKj7eG2bRiK24O5Ipq/oldQUU+NPcC/26DaHmvZzAj+aahmxTZpVQIarZIRFJseif5BfQeT5Fy9WUcbTSV1Yb7ki7DRK9I/IuMRUwuyp/xr+4YA9+8kHllFiRmon88nNYtyHjUSx2yLnMaP7VUWivP7yJOH75WEY9913iFv9q3/qbCKiG82Kpu/xC/1TEYrt/RV0R7h3zLVNaKI7hMN24lSqiYc2qMr5HB1c5neIET1YR/vc2XHWw5Hh6aSdCDqvPuBXdYaAkHvcLZUwzZZVQiNagT9+gNAGr3sVaXXAbtGt7kvZeXbPevZAgMBAAECggEAD64EVCFzgjrs0dcwQxEZQWunMHDg74XjHVYVIAAV3z4mHC+8W/jzrWAOlojJq3ymaauzPk2qk6PlR2cCxN7b2j1GwhuNHHRwOIWX/gQ/X4bIwshR+Btdt1nHUeKE9WQ1ejRKl4o8dax+IOOMkxncMEo2Zhni4Mi7snSVq1ioUuRyqy6sBs33sQDPQC76+NXvQpUr5dyALI5c7FqTS7EqVRmGDA1RDNMNBtaeEIEmlYAJ5QqGHmieLV5nEtflNr1CWP3OuIF8N9Uvod3Bc9SAPWO0cb34FaM9v4Y4FDvKU2gYST2i2HZ28+O0T1I/Cn6DS4cogr5OJGydOT25IyFdoQKBgQDhsYoCVDGvh/ZhZ+E7lB3r4wPDaSH5VMoa2oIc2Zr7AERqvhc9i5z4YcOkmmQ6bcFi8kVvtJR74sYPP6GuCGbkq5245UzlLXlaaP8UDEkosZVJ8mGNjQNxursLCI4qmTN7pHR/iWbDVPjuDN5kg2tEi4jFPzTKlgGKl5s34uR6jQKBgQDLa1RB++SjTaT4oETlKSbDNbn/4/cEJUPGLMkhNGud91oZ2mWA+rTFAWHgiix3+RLhF8HIvxvHYkiA9hvqNYTTFPm5BED6wG0csB7tUKarJyZfmUNe7sbhIVT7vvw9+Uq8SDaVqEnLl+6fm6kNPDbEE5P0+FsnEw6RsXvDSaOpfQKBgBKusJ7qu0Yteg6sG6/j3eo124zkegR6qVQ5vEWJGdQnPIKdg6z7jp3c8eYBRcS0ayq2pVrO1u++YOjIOqj+Vw4cyqyQhqH99qquQFc3gSLWOGZrovmlr6BNdcg/CA2sqt9USLR5+kC3GvgRpqMpYcrFxieVyNfwPOZtEFM6+/DNAoGBAMGqtrZ3lo9vbeAT3mP7EN+LuEELDfNRczwrCXZmjQsBIzQ3/KmWhyKFFWWMx5eVeEb7slBouo7SYMr/BUavm3zHnJVsmlzhdUB54Yf5YCTVCjC8Hysz0/8lF97yTv7F6ERn0Cgd59xBEzu8HG/wYwe8yAHTrhz+hMFrI7Si2IGVAoGBAMmAT+NoAJFbJ9az/w2GyTOZh/NaU8rwSZNCkUmzwIWLG9w021acGUZKlYduGTeN55pes6hKD3EB4W77E7Z5+jNVQnC49jfcbuLA6FkV7C/s2hcNpmNzWs+ll++wGXlyRMeVTho+sJ2cb2rw85kLBU1MTtt5s9QTaijxTwlDThyN
+  alipayPublicKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmbgZubarbwROwfnO9RGgbgNkgohK0RjFG9mbvsCuMVl0id50+PuAuWcCBlP3bt/hw253XVkytoHZl0WYiofaicqqVbTriTv5tWA9VFyVOPIP/N9wYhG1dQS9vmKsjZYXTep4RsupC3QNYtWB6VT9z1pbCr5zyLcD7AKALZYIXRu7WFYfiQcvilHv8+32dBGSQNh08cD1PJpqLuTN3yjPD7VkVoV7iza7QpAQGGSM8jecfwRB99GZcrysZMa2sWaFrin4gNMkZIqbbguCqGB+K5pU36KgOiFxV5lm8fxAqAeoLpU0BlbUC3DS6cG9wcdLW2HUGbp8pMWDmPEXs3T6SQIDAQAB
+  notifyUrl: ""
+  returnUrl: ""

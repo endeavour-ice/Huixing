@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ice.hxy.mapper.PostCollectMapper">
+
+    <delete id="removeListByPostId">
+        <if test="postIds !=null and postIds.size()>0">
+            delete from post_collect
+            <where>
+                <foreach collection="postIds" item="id" separator="," open="post_id in (" close=")">
+                    #{id}
+                </foreach>
+
+            </where>
+        </if>
+
+    </delete>
+</mapper>
