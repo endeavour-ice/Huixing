@@ -3,12 +3,10 @@ package com.ice.hxy.controller.TagController;
 import com.ice.hxy.common.B;
 import com.ice.hxy.mode.request.TagRequest;
 import com.ice.hxy.service.TagService.TagsService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * <p>
@@ -28,5 +26,9 @@ public class TagsController {
     public B<Boolean> addUserTag(@RequestBody TagRequest tagRequest) {
         return tagsService.addUserTag(tagRequest);
     }
-
+    @GetMapping("/get")
+    public B<List<String>> getTag(@RequestParam("id") Long id,
+                                  @RequestParam(value = "tid",required = false)Long tid) {
+        return tagsService.get(id,tid);
+    }
 }

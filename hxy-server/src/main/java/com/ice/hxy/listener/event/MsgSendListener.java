@@ -39,7 +39,7 @@ public class MsgSendListener {
 
     @Autowired
     private IUserService userService;
-    @Async
+    @Async(value = "executorService")
     @EventListener(classes = MsgSendPyEvent.class)
     public void notifyPyOnline(MsgSendPyEvent msgSendPyEvent) {
         Long pyId = msgSendPyEvent.getPyId();
@@ -50,7 +50,7 @@ public class MsgSendListener {
         resp.setData(res);
         webSocketService.sendPyOnline(resp, chatRecord);
     }
-    @Async
+    @Async(value = "executorService")
     @EventListener(classes = MsgSendTeamEvent.class)
     public void notifyTeamOnline(MsgSendTeamEvent teamEvent) {
         ChatMessageResp res = teamEvent.getResp();
@@ -64,7 +64,7 @@ public class MsgSendListener {
         webSocketService.sendTeamOnline(resp, tuids,teamChatRecord);
     }
 
-    @Async
+    @Async(value = "executorService")
     @EventListener(classes = MsgSendGPTEvent.class)
     public void notifyGptOnline(MsgSendGPTEvent teamEvent) {
         Long uid = teamEvent.getUid();

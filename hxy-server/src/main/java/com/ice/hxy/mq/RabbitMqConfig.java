@@ -35,7 +35,20 @@ public class RabbitMqConfig {
     public DirectExchange directCalExchange() {
         return new DirectExchange(MqClient.EXCHANGE_CAL_DIRECT);
     }
+    @Bean("logExchange")
+    public DirectExchange logExchange() {
+        return new DirectExchange(MqClient.LOG_EXCHANGE);
+    }
+    @Bean("logQueue")
+    public Queue logQueue() {
+        return QueueBuilder.durable(MqClient.LOG_QUEUE).build();
+    }
 
+    @Bean
+    public Binding bindingLog(@Qualifier("logExchange")DirectExchange logExchange,
+                              @Qualifier("logQueue")Queue logQueue) {
+        return BindingBuilder.bind(logQueue).to(logExchange).with(MqClient.LOG_Key);
+    }
     @Bean("nettyQueue")
     public Queue NettyQueue() {
         Map<String, Object> arguments = new HashMap<>();

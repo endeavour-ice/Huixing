@@ -12,7 +12,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.6.8</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
 
     <modules>
@@ -54,9 +54,18 @@
         <toolgood.version>3.0.3.1</toolgood.version>
         <chatgpt.version>1.0.0</chatgpt.version>
         <sensitive.version>0.2.1</sensitive.version>
+        <mahout.version>0.9</mahout.version>
     </properties>
     <dependencyManagement>
+
         <dependencies>
+            <!-- https://mvnrepository.com/artifact/org.apache.mahout/mahout-core -->
+            <dependency>
+                <groupId>org.apache.mahout</groupId>
+                <artifactId>mahout-core</artifactId>
+                <version>${mahout.version}</version>
+            </dependency>
+
             <!--敏感词过滤-->
             <dependency>
                 <groupId>com.github.houbb</groupId>

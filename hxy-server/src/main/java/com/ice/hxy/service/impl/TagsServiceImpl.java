@@ -5,19 +5,23 @@ import com.ice.hxy.common.B;
 import com.ice.hxy.mapper.TagsMapper;
 import com.ice.hxy.mode.entity.Tags;
 import com.ice.hxy.mode.entity.User;
+import com.ice.hxy.mode.entity.UserTeam;
 import com.ice.hxy.mode.enums.TagCategoryEnum;
 import com.ice.hxy.mode.enums.UserRole;
 import com.ice.hxy.mode.request.TagRequest;
 import com.ice.hxy.mode.request.TeamTagRequest;
 import com.ice.hxy.service.TagService.TagsService;
+import com.ice.hxy.service.UserService.UserTeamService;
+import com.ice.hxy.util.LongUtil;
 import com.ice.hxy.util.SensitiveUtils;
 import com.ice.hxy.util.UserUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
+import javax.annotation.Resource;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -30,6 +34,8 @@ import java.util.List;
 @Service
 @Slf4j
 public class TagsServiceImpl extends ServiceImpl<TagsMapper, Tags> implements TagsService {
+    @Resource
+    private UserTeamService userTeamService;
 
 
     @Override
@@ -41,63 +47,7 @@ public class TagsServiceImpl extends ServiceImpl<TagsMapper, Tags> implements Ta
         return addTag(tagRequest, TagCategoryEnum.USER, loginUser.getId()) ? B.ok() : B.error();
     }
 
-    @Override
-    public B<Boolean> addPostTag(TagRequest tagRequest) {
-        User loginUser = UserUtils.getLoginUser();
-        if (!UserRole.isAdmin(loginUser)) {
-            return B.auth();
-        }
-        return addTag(tagRequest, TagCategoryEnum.POST, loginUser.getId()) ? B.ok() : B.error();
-    }
 
-    @Override
-    public B<Boolean> addTeamTag(TeamTagRequest tagRequest) {
-        User loginUser = UserUtils.getLoginUser();
-        if (!UserRole.isAdmin(loginUser)) {
-            return B.auth();
-        }
-        return addTag(tagRequest, TagCategoryEnum.TEAM, loginUser.getId()) ? B.ok() : B.error();
-    }
-
-    @Override
-    public B<Boolean> addTeamPostTag(TagRequest tagRequest) {
-        User loginUser = UserUtils.getLoginUser();
-        if (!UserRole.isAdmin(loginUser)) {
-            return B.auth();
-        }
-        return addTag(tagRequest, TagCategoryEnum.TEAM_POST, loginUser.getId()) ? B.ok() : B.error();
-    }
-
-    @Override
-    public B<Boolean> addIndexTag(TagRequest tagRequest) {
-        return null;
-    }
-
-    public boolean addTagBatch(List<String> tags,TagCategoryEnum categoryEnum, long userId,Long teamId) {
-        if (tags.isEmpty()) {
-            return false;
-        }
-        if (categoryEnum == TagCategoryEnum.TEAM && teamId < 0) {
-            return false;
-        }
-        List<Tags> tagsArrayList = new ArrayList<>();
-        for (String tag : tags) {
-            Tags ta = new Tags();
-            ta.setTagType("通用");
-            ta.setTag(SensitiveUtils.sensitive(tag));
-            ta.setCreatorId(userId);
-            if (categoryEnum == TagCategoryEnum.TEAM && teamId > 0) {
-                ta.setCategory(teamId);
-            }else {
-                ta.setCategory(teamId);
-            }
-
-            ta.setTagNum(0);
-            tagsArrayList.add(ta);
-        }
-        return this.saveBatch(tagsArrayList);
-
-    }
     public boolean addTag(TagRequest tagRequest, TagCategoryEnum categoryEnum, long userId) {
 
         if (tagRequest == null) {
@@ -134,5 +84,25 @@ public class TagsServiceImpl extends ServiceImpl<TagsMapper, Tags> implements Ta
         return this.save(tags);
     }
 
+    @Override
+    public B<List<String>> get(Long id, Long tid) {
+        TagCategoryEnum tagEnumByValue = TagCategoryEnum.getTagEnumByValue(id);
+        long category = tagEnumByValue.getValue();
+        if (tagEnumByValue.equals(TagCategoryEnum.TEAM)) {
+            User loginUser = UserUtils.getLoginUser();
+            if (LongUtil.isEmpty(tid)) {
+                return B.parameter();
+            }
+            Long count = userTeamService.lambdaQuery().eq(UserTeam::getUserId, loginUser.getId()).eq(UserTeam::getTeamId, tid).count();
+            if (count == null||count<=0) {
+                return B.parameter();
+            }
+            category = tid;
+        }
+        List<Tags> list = this.lambdaQuery().eq(Tags::getCategory, category).select(Tags::getTag).list();
+        List<String> tags = list.stream().map(Tags::getTag).collect(Collectors.toList());
 
+
+        return B.ok(tags);
+    }
 }

@@ -2,6 +2,7 @@ package com.ice.hxy.controller.LogController;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.ice.hxy.annotation.RedissonLock;
 import com.ice.hxy.common.B;
 import com.ice.hxy.common.ErrorCode;
 import com.ice.hxy.exception.GlobalException;
@@ -38,6 +39,7 @@ public class OpLogController {
     private ExcelService excelService;
     @Autowired
     private IOpLogService logService;
+
     // 获取日志信息
     @PostMapping("/list")
     public B<Page<OpLog>> list(@RequestBody LogRequest logRequest) {
@@ -59,17 +61,18 @@ public class OpLogController {
         wrapper.and(StringUtils.hasText(name), w -> w.like("op_name", name))
                 .and(exTime > 0, w -> wrapper.ge("ex_time", exTime))
                 .and(opTime != null, w -> {
-            if (opTime != null) {
-                w.ge("op_time", opTime.with(LocalTime.MIN))
-                        .and(wq -> wq.lt("op_time", opTime.with(LocalTime.MAX)));
-            }
-        }).and(error,w-> w.eq("status", 1));
-        Page<OpLog> opLogPage = logService.page(page,wrapper);
+                    if (opTime != null) {
+                        w.ge("op_time", opTime.with(LocalTime.MIN))
+                                .and(wq -> wq.lt("op_time", opTime.with(LocalTime.MAX)));
+                    }
+                }).and(error, w -> w.eq("status", 1));
+        Page<OpLog> opLogPage = logService.page(page, wrapper);
         return B.ok(opLogPage);
     }
 
     /**
      * 下载 日志
+     *
      * @param response
      * @throws IOException
      */
@@ -82,5 +85,22 @@ public class OpLogController {
         response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
         ServletOutputStream outputStream = response.getOutputStream();
         excelService.simpleWrite(outputStream);
+    }
+
+    /**
+     * 删除所有的日志
+     */
+    @PostMapping("/delAll")
+    @RedissonLock
+    public B<Boolean> delAll() {
+        User loginUser = UserUtils.getLoginUser();
+        if (!UserRole.isRoot(loginUser)) {
+            throw new GlobalException(ErrorCode.NO_AUTH);
+        }
+        long count = logService.count();
+        if (count <= 0) {
+            return B.ok();
+        }
+        return B.ok(logService.lambdaUpdate().ge(OpLog::getId, 0).remove());
     }
 }

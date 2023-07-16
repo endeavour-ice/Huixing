@@ -2,11 +2,13 @@ package com.ice.hxy.mq;
 
 import com.ice.hxy.mode.entity.ChatHalRecord;
 import com.ice.hxy.mode.entity.ChatRecord;
+import com.ice.hxy.mode.entity.OpLog;
 import com.ice.hxy.mode.entity.TeamChatRecord;
 import com.ice.hxy.mode.entity.vo.ChatListVo;
 import com.ice.hxy.mode.enums.MQKey;
 import com.ice.hxy.mode.mq.MqClient;
 import com.ice.hxy.util.GsonUtils;
+import com.ice.hxy.util.IpUtils;
 import com.ice.hxy.util.SnowFlake;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.core.MessageProperties;
@@ -78,11 +80,16 @@ public class RabbitService {
     }
 
     public void saveTag(Long userId,Long groupId,String tag) {
-        Map<String, Object> map = new HashMap<>(2);
+        Map<String, Object> map = new HashMap<>(3);
         map.put("userId", userId);
         map.put("groupId", groupId);
         map.put("tag", tag);
         String json = GsonUtils.getGson().toJson(map);
         sendMessage(DIRECT_EXCHANGE, MQKey.TAG.getKey(),json);
+    }
+    // 保存日志
+    public void saveLog(OpLog opLog) {
+        opLog.setOpLocation(IpUtils.getRealAddressByIP(opLog.getOpIp()));
+        sendMessage(MqClient.LOG_EXCHANGE,MqClient.LOG_Key,GsonUtils.getGson().toJson(opLog));
     }
 }

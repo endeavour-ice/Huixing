@@ -1,10 +1,6 @@
 package com.ice.hxy.util;
 
-import com.ice.hxy.mode.entity.ChatRecord;
-
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Random;
 
 public class SnowFlake {
     // 因为二进制里第一个 bit 为如果是 1，那么都是负数，但是我们生成的 id 都是正数，所以第一个 bit 统一都是 0。
@@ -179,25 +175,6 @@ public class SnowFlake {
         return worker.nextId()+random.nextInt(20000);
     }
 
-    public static void main(String[] args) {
-        List<CompletableFuture<Void>> arrayList = new ArrayList<>();
-        ArrayList<Long> list = new ArrayList<>(100 * 10000);
-        for (int i = 0; i < 100; i++) {
-            CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(() -> {
-                for (int j = 0; j < 10000; j++) {
-                    long snowLong = getSnowLong(2001);
-
-                    list.add(snowLong);
-                }
-            });
-            arrayList.add(completableFuture);
-        }
-        CompletableFuture.allOf(arrayList.toArray(new CompletableFuture[]{})).join();
-        System.out.println(100*10000);
-        System.out.println(list.size());
-        HashSet<Long> longs = new HashSet<>(list);
-        System.out.println(longs.size());
-    }
 
     public static String getSnowString() {
         SnowFlake worker = new SnowFlake(random.nextInt(31), random.nextInt(31), 1);

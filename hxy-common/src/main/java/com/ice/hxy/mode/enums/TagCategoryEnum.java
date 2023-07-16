@@ -22,4 +22,17 @@ public enum TagCategoryEnum {
     public long getValue() {
         return value;
     }
+
+    public static TagCategoryEnum getTagEnumByValue(Long value) {
+        if (value == null) {
+            return COMMON;
+        }
+        for (TagCategoryEnum tagCategoryEnum : TagCategoryEnum.values()) {
+            long val = tagCategoryEnum.getValue();
+            if (value.equals(val)) {
+                return tagCategoryEnum;
+            }
+        }
+        return COMMON;
+    }
 }

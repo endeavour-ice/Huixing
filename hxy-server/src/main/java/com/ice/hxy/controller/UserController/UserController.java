@@ -16,7 +16,6 @@ import com.ice.hxy.service.UserService.IUserService;
 import com.ice.hxy.util.LongUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -190,7 +189,7 @@ public class UserController {
     }
 
     @PostMapping("/qq/getInfo")
-    public B<String> getInfo(@RequestBody QQLoginRequest qqLoginRequest, HttpServletRequest request) {
-        return userService.getQQInfo(qqLoginRequest, request);
+    public B<String> getInfo(@RequestBody QQLoginRequest qqLoginRequest) {
+        return userService.getQQInfo(qqLoginRequest);
     }
 }

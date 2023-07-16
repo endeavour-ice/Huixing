@@ -15,6 +15,10 @@ public interface MqClient {
     String READ_TEAM_QUEUE = "read_team_queue";
     String READ_CHAT_QUEUE = "read_chat_queue";
     String OSS_QUEUE = "oss_queue";
+    // 日志
+    String LOG_EXCHANGE = "log_exchange";
+    String LOG_QUEUE = "log_queue";
+    String LOG_Key = "log_key";
     // 删除 redis key
     String REMOVE_REDIS_QUEUE = "removeRedisByQueue";
     //

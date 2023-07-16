@@ -3,8 +3,6 @@ package com.ice.hxy.service.impl.user;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.HttpRequest;
-import cn.hutool.http.HttpResponse;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -17,6 +15,7 @@ import com.ice.hxy.config.initConfig.ConstantProperties;
 import com.ice.hxy.exception.GlobalException;
 import com.ice.hxy.mapper.UserMapper;
 import com.ice.hxy.mode.constant.CacheConstants;
+import com.ice.hxy.mode.constant.LoginType;
 import com.ice.hxy.mode.dto.PageFilter;
 import com.ice.hxy.mode.dto.QQInfo;
 import com.ice.hxy.mode.dto.QQLogin;
@@ -31,6 +30,7 @@ import com.ice.hxy.mode.resp.SafetyUserResponse;
 import com.ice.hxy.mq.RabbitService;
 import com.ice.hxy.service.TagService.TagsService;
 import com.ice.hxy.service.UserService.IUserService;
+import com.ice.hxy.service.commService.HttpService;
 import com.ice.hxy.service.commService.RedisCache;
 import com.ice.hxy.service.commService.TokenService;
 import com.ice.hxy.util.*;
@@ -50,7 +50,6 @@ import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -84,7 +83,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     private TokenService tokenService;
     @Resource
     private RedissonClient redissonClient;
-
+    @Resource
+    private HttpService httpService;
     @Override
     public B<SafetyUserResponse> getCurrent(HttpServletRequest request) {
         User user = tokenService.getTokenUser(request);
@@ -114,9 +114,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             log.error(e.getMessage());
             throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION);
         } finally {
-            if (lock.isHeldByCurrentThread()) {
-                lock.unlock();
-            }
+            lock.unlock();
         }
         return B.ok();
     }
@@ -213,6 +211,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 user.setAvatarUrl(randomUrl);
             }
         }
+        user.setLoginType(LoginType.EMAIL);
         user.setUsername(userAccount);
         user.setEmail(email);
         boolean save = this.save(user);
@@ -817,7 +816,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     public B<String> qqLogin() {
         String requestUrl = String.format("https://uniqueker.top/connect.php?act=login&appid=%s&appkey=%s&type=qq&redirect_uri=%s",
-                ConstantProperties.QQId, ConstantProperties.QQKey, "http://g4mhnr.natappfree.cc/pw");
+                ConstantProperties.QQId, ConstantProperties.QQKey, "http://124.222.223.108");
         CloseableHttpClient client;
         CloseableHttpResponse response = null;
         try {
@@ -844,24 +843,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public B<String> getQQInfo(QQLoginRequest qqLoginRequest, HttpServletRequest request) {
-        String code;
-        String type;
-        if (qqLoginRequest == null ||
-                !StringUtils.hasText(code = qqLoginRequest.getCode())
-                || !StringUtils.hasText(type = qqLoginRequest.getType())) {
-            throw new GlobalException(ErrorCode.PARAMS_ERROR);
+    public B<String> getQQInfo(QQLoginRequest qqLoginRequest) {
+        if (qqLoginRequest == null) {
+            return B.error("登录失败");
         }
-        String requestUrl = String.format("https://uniqueker.top/connect.php?act=callback&appid=%s&appkey=%s&type=%s&code=%s",
-                ConstantProperties.QQId, ConstantProperties.QQKey, type, code);
-        HttpResponse response = HttpRequest.get(requestUrl).execute();
-        byte[] bytes = response.bodyBytes();
-        String resp = new String(bytes, StandardCharsets.UTF_8);
+        String code = qqLoginRequest.getCode();
+        if (!StringUtils.hasText(code)) {
+            return B.error("登录失败");
+        }
+        String url = "https://uniqueker.top/connect.php?act=callback&appid=1573&appkey=0473f83608b35993b558c751e77649b7&type=qq&code="+code;
+        String resp = null;
+        try {
+            resp = httpService.get(url, String.class).getBody();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
         QQInfo qqInfo = GsonUtils.getGson().fromJson(resp, QQInfo.class);
         if (qqInfo == null || qqInfo.getCode() != 0) {
-            return B.error();
+            return B.error("登录失败");
         }
         String access_token = qqInfo.getAccess_token();
         String social_uid = qqInfo.getSocial_uid();
@@ -870,30 +872,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         String location = qqInfo.getLocation();
         String gender = qqInfo.getGender();
         String ip = qqInfo.getIp();
-        QueryWrapper<User> wrapper = new QueryWrapper<>();
-        wrapper.eq("user_account", nickname);
-        User userLogin = this.getOne(wrapper);
-        if (userLogin != null) {
-            if (userLogin.getOpenId().equals(social_uid)) {
-                return B.ok(tokenService.setToken(userLogin));
-            } else {
-                nickname = nickname + "_" + RandomUtil.randomInt(100, 1000);
+        User userLogin = this.lambdaQuery().eq(User::getOpenId, social_uid).one();
+        if (userLogin == null) {
+            userLogin = new User();
+            userLogin.setUsername(nickname);
+            userLogin.setUserAccount(nickname);
+            userLogin.setLoginType(LoginType.QQ);
+            userLogin.setOpenId(social_uid);
+            userLogin.setAvatarUrl(faceimg);
+            userLogin.setGender(gender);
+            boolean save = this.save(userLogin);
+            if (!save) {
+                log.error("getQQInfo 用户保存错误");
+                throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION);
             }
         }
-        User user = new User();
-        user.setUsername(nickname);
-        user.setUserAccount(nickname);
-        user.setLoginType(2);
-        user.setOpenId(social_uid);
-        user.setAvatarUrl(faceimg);
-        user.setGender(gender);
-        boolean save = this.save(user);
-        if (!save) {
-            log.error("getQQInfo 用户保存错误");
-            throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION);
-        }
-
-        return B.ok(tokenService.setToken(user));
+        return B.ok(tokenService.setToken(userLogin));
 
     }
 

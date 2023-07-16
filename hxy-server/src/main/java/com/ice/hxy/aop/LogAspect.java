@@ -90,6 +90,7 @@ public class LogAspect {
             } catch (Exception ignored) {
 
             }
+
             Threads.time().execute(AsyncFactory.recordOp(opLog));
         }
         return result;

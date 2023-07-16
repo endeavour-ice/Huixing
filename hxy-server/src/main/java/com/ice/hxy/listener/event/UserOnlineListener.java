@@ -33,7 +33,7 @@ public class UserOnlineListener {
      * 通知好友上线
      * @param userOnlineEvent
      */
-    @Async
+    @Async(value = "executorService")
     @EventListener(classes = UserOnlineEvent.class)
     public void pyOnline(UserOnlineEvent userOnlineEvent) {
         User user = userOnlineEvent.getUser();
@@ -52,7 +52,7 @@ public class UserOnlineListener {
      * 通知队伍上线
      * @param userOnlineEvent
      */
-    @Async
+    @Async(value = "executorService")
     @EventListener(classes = UserOnlineEvent.class)
     public void teamOnline(UserOnlineEvent userOnlineEvent) {
 

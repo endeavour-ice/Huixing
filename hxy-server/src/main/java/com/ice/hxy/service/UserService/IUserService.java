@@ -120,5 +120,5 @@ public interface IUserService extends IService<User> {
 
     B<String> qqLogin();
 
-    B<String> getQQInfo(QQLoginRequest qqLoginRequest, HttpServletRequest request);
+    B<String> getQQInfo(QQLoginRequest qqLoginRequest);
 }

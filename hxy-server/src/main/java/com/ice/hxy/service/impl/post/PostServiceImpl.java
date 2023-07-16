@@ -97,10 +97,6 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
 
     /**
      * 添加文章
-     *
-     * @param postRequest
-     * @param file
-     * @return
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -120,11 +116,12 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
         }
         String sensitive = SensitiveUtils.sensitive(content);
         if (LongUtil.isEmpty(groupId)) {
+            groupId = PostGroupEnum.INDEX.getValue();
+
+        } else {
             if (!teamService.isUserTeam(groupId, userId)) {
                 return B.parameter("未加入该队伍");
             }
-        } else {
-            groupId = PostGroupEnum.INDEX.getValue();
         }
         if (StringUtils.hasText(postRequestTag)) {
             try {
@@ -137,13 +134,16 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
                     return B.parameter("标签超出数量");
                 }
                 for (String tag : tags) {
+                    if (tag.length() > 8) {
+                        return B.parameter("标签内容过长");
+                    }
                     if (SensitiveUtils.contains(tag)) {
                         return B.parameter("标签包含敏感消息");
                     }
                 }
                 postRequestTag = gson.toJson(tags);
             } catch (Exception e) {
-                return B.parameter("标签错误");
+                return B.parameter("标签解析错误");
             }
         }
         Post post = new Post();
@@ -160,7 +160,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
         PostGroup postGroup = new PostGroup();
         postGroup.setPostId(post.getId());
         postGroup.setGroupId(groupId);
-        save= postGroupService.save(postGroup);
+        save = postGroupService.save(postGroup);
         if (!save) {
             throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION);
         }
@@ -192,11 +192,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
             User loginUser = UserUtils.getLoginUser();
             isThumb = CompletableFuture.runAsync(() -> {
                 Long userId = loginUser.getId();
-                QueryWrapper<PostCollect> postCollectQueryWrapper = new QueryWrapper<>();
-                postCollectQueryWrapper.in("post_id", keySet);
-                postCollectQueryWrapper.eq("user_id", userId);
-                postCollectQueryWrapper.select("post_id");
-                List<PostCollect> collectList = collectService.list(postCollectQueryWrapper);
+                List<PostCollect> collectList = collectService.lambdaQuery().in(PostCollect::getPostId, keySet)
+                        .eq(PostCollect::getUserId, userId).select(PostCollect::getPostId).list();
                 for (PostCollect postCollect : collectList) {
                     Long collectPostId = postCollect.getPostId();
                     if (LongUtil.isEmpty(collectPostId)) {
@@ -212,11 +209,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
                     }
                     postVo.setHasCollect(true);
                 }
-                QueryWrapper<PostThumb> thumbQueryWrapper = new QueryWrapper<>();
-                thumbQueryWrapper.in("post_id", keySet);
-                thumbQueryWrapper.eq("user_id", userId);
-                thumbQueryWrapper.select("post_id");
-                List<PostThumb> thumbList = thumbService.list(thumbQueryWrapper);
+                List<PostThumb> thumbList = thumbService.lambdaQuery().in(PostThumb::getPostId, keySet)
+                        .eq(PostThumb::getUserId, userId).select(PostThumb::getPostId).list();
                 for (PostThumb postThumb : thumbList) {
                     Long thumbPostId = postThumb.getPostId();
                     if (LongUtil.isEmpty(thumbPostId)) {
@@ -352,16 +346,15 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
         Long userId = loginUser.getId();
         boolean result;
         synchronized (userId.toString().intern()) {
-            QueryWrapper<PostThumb> thumbQueryWrapper = new QueryWrapper<>();
-            thumbQueryWrapper.eq("post_id", postId);
-            thumbQueryWrapper.eq("user_id", userId);
-            long count = thumbService.count(thumbQueryWrapper);
+            Long count = thumbService.lambdaQuery().eq(PostThumb::getPostId, postId)
+                    .eq(PostThumb::getUserId, userId).count();
             TransactionStatus transaction = null;
-            if (count >= 1) {
+            if (count != null && count >= 1) {
                 // 取消点赞
                 try {
                     transaction = dataSourceTransactionManager.getTransaction(transactionDefinition);
-                    result = thumbService.remove(thumbQueryWrapper);
+                    result = thumbService.lambdaUpdate().eq(PostThumb::getPostId, postId)
+                            .eq(PostThumb::getUserId, userId).remove();
                     if (!result) {
                         throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION);
                     }
@@ -427,16 +420,15 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
         Long userId = loginUser.getId();
         boolean result;
         synchronized (userId.toString().intern()) {
-            QueryWrapper<PostCollect> thumbQueryWrapper = new QueryWrapper<>();
-            thumbQueryWrapper.eq("post_id", postId);
-            thumbQueryWrapper.eq("user_id", userId);
-            long count = collectService.count(thumbQueryWrapper);
+            Long count = collectService.lambdaQuery().eq(PostCollect::getPostId, postId)
+                    .eq(PostCollect::getUserId, userId).count();
             TransactionStatus transaction = null;
-            if (count >= 1) {
+            if (count != null && count >= 1) {
                 // 取消
                 try {
                     transaction = dataSourceTransactionManager.getTransaction(transactionDefinition);
-                    result = collectService.remove(thumbQueryWrapper);
+                    result = collectService.lambdaUpdate().eq(PostCollect::getPostId, postId)
+                            .eq(PostCollect::getUserId, userId).remove();
                     if (result) {
                         result = this.update()
                                 .eq("id", postId)
@@ -517,12 +509,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
             if (post == null) {
                 return B.parameter();
             }
-            QueryWrapper<PostComment> wrapper = new QueryWrapper<>();
-            wrapper.eq("post_id", postId);
-            wrapper.eq("user_id", userId);
-            wrapper.eq("content", content);
-            long count = commentService.count(wrapper);
-            if (count > 2) {
+            Long count = commentService.lambdaQuery().eq(PostComment::getPostId, postId)
+                    .eq(PostComment::getUserId, content).eq(PostComment::getContent, content).count();
+            if (count == null || count > 2) {
                 return B.parameter("评论重复");
             }
             PostComment postComment = new PostComment();
@@ -638,6 +627,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
                 return B.parameter();
             }
         }
+
         List<CommentVo> commentVoList = baseMapper.getPostCommentByPostId(postId);
         for (CommentVo commentVo : commentVoList) {
             Long userID = commentVo.getOwner().getId();

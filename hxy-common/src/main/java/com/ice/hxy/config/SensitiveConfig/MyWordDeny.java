@@ -28,7 +28,7 @@ public class MyWordDeny implements IWordDeny {
             Path myAllowWordsPath = Paths.get(myAllowWords.getFile().getPath());
             list = Files.readAllLines(myAllowWordsPath, StandardCharsets.UTF_8);
         } catch (IOException ioException) {
-            log.error("读取非敏感词文件错误！" + ioException.getMessage());
+            log.warn("读取非敏感词文件错误！" + ioException.getMessage());
         }
         return list;
     }

@@ -13,5 +13,4 @@ import lombok.Data;
 public class PageResp<T> {
     private Boolean isLast = Boolean.FALSE;
     private T data;
-
 }
