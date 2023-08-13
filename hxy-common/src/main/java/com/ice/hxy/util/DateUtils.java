@@ -48,4 +48,14 @@ public class DateUtils {
         Instant instant = Instant.ofEpochMilli(timestamp); // 将时间戳转换为Instant类型
         return LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
     }
+
+    public static String getLDTString(LocalDateTime localDateTime) {
+        if (localDateTime == null) {
+            return null;
+        }
+        int year = localDateTime.getYear(); // 获取年份
+        int month = localDateTime.getMonthValue(); // 获取月份
+        int day = localDateTime.getDayOfMonth(); // 获取日期
+        return String.format("%d年%d月%d日", year, month, day);
+    }
 }

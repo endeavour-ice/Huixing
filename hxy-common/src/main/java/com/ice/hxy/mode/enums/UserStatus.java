@@ -18,6 +18,15 @@ public enum UserStatus {
         this.name = name;
     }
 
+    public static String getN(Integer key) {
+        for (UserStatus value : UserStatus.values()) {
+            if (key.equals(value.getKey())) {
+                return value.getName();
+            }
+        }
+        return NORMAL.getName();
+    }
+
     public int getKey() {
         return key;
     }

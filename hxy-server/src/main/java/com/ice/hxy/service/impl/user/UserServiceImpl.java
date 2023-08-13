@@ -211,6 +211,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 user.setAvatarUrl(randomUrl);
             }
         }
+        user.setRole(UserRole.USER.getKey());
         user.setLoginType(LoginType.EMAIL);
         user.setUsername(userAccount);
         user.setEmail(email);
@@ -295,7 +296,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     public B<String> userAdminLogin(UserLoginRequest userLogin) {
         if (userLogin == null) {
-            throw new GlobalException(ErrorCode.NULL_ERROR, "数据为空!");
+            return B.parameter();
         }
         String userAccount = userLogin.getUserAccount();
         String password = userLogin.getPassword();

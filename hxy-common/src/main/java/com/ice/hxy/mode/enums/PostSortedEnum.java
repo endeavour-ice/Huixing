@@ -13,26 +13,48 @@ public enum PostSortedEnum {
     THUMB("like", "点赞最多"),
     COMMENT("com", "评论最多"),
     RECOMMEND("rec", "推荐"),
-    HOT("hot", "最热");
+    HOT("hot", "最热"),
+    RANDOM("rdm", "随机");
     private final String value;
+    private final String dec;
 
     PostSortedEnum(String value, String dec) {
         this.value = value;
+        this.dec = dec;
     }
 
     public String getValue() {
         return value;
     }
 
-    public static PostSortedEnum isScope(String value) {
-        if (!StringUtils.hasText(value)) {
-            return RECOMMEND;
+    public String getDec() {
+        return dec;
+    }
+
+    public static PostSortedEnum isScope(String value, String d) {
+        PostSortedEnum deft = DESC;
+        if (StringUtils.hasText(d)) {
+            PostSortedEnum postSortedEnum = hasEnum(d);
+            if (postSortedEnum!=null) deft = postSortedEnum;
+        }
+        if (StringUtils.hasText(value)) {
+            return deft;
         }
         for (PostSortedEnum postSortedEnum : PostSortedEnum.values()) {
             if (postSortedEnum.getValue().equals(value)) {
                 return postSortedEnum;
             }
         }
-        return RECOMMEND;
+        return deft;
+    }
+
+    public static PostSortedEnum hasEnum(String value) {
+        for (PostSortedEnum postSortedEnum : PostSortedEnum.values()) {
+            if (postSortedEnum.getValue().equals(value)) {
+                return postSortedEnum;
+            }
+        }
+        return null;
+
     }
 }

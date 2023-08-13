@@ -11,29 +11,29 @@ import javax.servlet.http.HttpServletRequest;
  * @Description: TODO
  */
 public enum UserRole {
-    ROOT(999,"超级管理员"),
+    ROOT("root","超级管理员"),
     /**
      * 普通用户
      */
-    NORMAL(0,"普通用户"),
+    USER("user","普通用户"),
     /**
      * 管理员
      */
-    ADMIN(1,"管理员"),
+    ADMIN("admin","管理员"),
 
     /**
      * 测试
      */
-    TEST(2,"测试");
-    private final int key;
+    TEST("test","测试");
+    private final String key;
     private final String name;
 
-    UserRole(int key,String name) {
+    UserRole(String key,String name) {
         this.key = key;
         this.name = name;
     }
 
-    public int getKey() {
+    public String getKey() {
         return key;
     }
 
@@ -41,6 +41,14 @@ public enum UserRole {
         return name;
     }
 
+    public static String getN(String key) {
+        for (UserRole value : UserRole.values()) {
+            if (key.equals(value.getKey())) {
+                return value.getName();
+            }
+        }
+        return USER.getName();
+    }
     public static boolean isAdmin(User user) {
         return user!=null && (user.getRole().equals(ADMIN.getKey())||user.getRole().equals(ROOT.getKey()));
     }

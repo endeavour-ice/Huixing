@@ -49,7 +49,7 @@ public class JobTest {
     private RedisCache redisCache;
     @Test
     void JobTestAAA() {
-        proCacheJob.postZsxq();
+        proCacheJob.postZsxq("sensorsdata2015jssdkcross=%7B%22distinct_id%22%3A%22818512224112252%22%2C%22first_id%22%3A%221881e2a58cd9e-0a22e7e8f6a8b3-26031a51-1327104-1881e2a58ce87f%22%2C%22props%22%3A%7B%22%24latest_traffic_source_type%22%3A%22%E7%9B%B4%E6%8E%A5%E6%B5%81%E9%87%8F%22%2C%22%24latest_search_keyword%22%3A%22%E6%9C%AA%E5%8F%96%E5%88%B0%E5%80%BC_%E7%9B%B4%E6%8E%A5%E6%89%93%E5%BC%80%22%2C%22%24latest_referrer%22%3A%22%22%7D%2C%22identities%22%3A%22eyIkaWRlbnRpdHlfY29va2llX2lkIjoiMTg4MWUyYTU4Y2Q5ZS0wYTIyZTdlOGY2YThiMy0yNjAzMWE1MS0xMzI3MTA0LTE4ODFlMmE1OGNlODdmIiwiJGlkZW50aXR5X2xvZ2luX2lkIjoiODE4NTEyMjI0MTEyMjUyIn0%3D%22%2C%22history_login_id%22%3A%7B%22name%22%3A%22%24identity_login_id%22%2C%22value%22%3A%22818512224112252%22%7D%2C%22%24device_id%22%3A%221881e2a58cd9e-0a22e7e8f6a8b3-26031a51-1327104-1881e2a58ce87f%22%7D; abtest_env=product; zsxq_access_token=120F965A-5498-FD1A-5DF3-914FF2A3A25B_3D3D5B55454C1F1C; zsxqsessionid=9064d8c329882a7e223aafce6f2a7984");
 
     }
 

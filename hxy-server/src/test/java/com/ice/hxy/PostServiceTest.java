@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -34,7 +35,7 @@ public class PostServiceTest {
 
     @Test
     void transferPost() {
-        List<Post> list = postService.list();
+        List<Post> list = postService.lambdaQuery().like(Post::getTags,"寻金之路").list();
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         ArrayList<PostGroup> arrayList = new ArrayList<>(6001);
         for (Post post : list) {
@@ -43,7 +44,7 @@ public class PostServiceTest {
             LocalDateTime createTime = post.getCreateTime();
             LocalDateTime updateTime = post.getUpdateTime();
             postGroup.setPostId(id);
-            postGroup.setGroupId(0L);
+            postGroup.setGroupId(1L);
             postGroup.setCreateTime(createTime);
             postGroup.setUpdateTime(updateTime);
             arrayList.add(postGroup);
@@ -62,19 +63,35 @@ public class PostServiceTest {
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[]{})).join();
     }
 
-    public static void main(String[] args) {
 
-        System.out.println(1652979221296926722L / 500000);
-    }
 
     @Test
     void updatePost() {
-        // 33059584425938
-        // 818248848185852
-        // 1652979221296926722
-        List<Post> list = postService.lambdaQuery().ge(Post::getId, 1652979221296926722L).list();
-        List<Long> collect = list.stream().map(Post::getId).collect(Collectors.toList());
-        QueryWrapper<Post> postQueryWrapper = new QueryWrapper<>();
+        List<Post> list = postService.list();
+        List<Long> ids = new ArrayList<>(6001);
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        for (Post post : list) {
+            String content = post.getContent();
+            if (!StringUtils.hasText(content)) {
+                Long postId = post.getId();
+                ids.add(postId);
+            }
+            if (ids.size() >= 6000) {
+                List<Long> finalArrayList = ids;
+                CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                    postService.removeBatchByIds(finalArrayList);
+                    postGroupService.lambdaUpdate().in(PostGroup::getPostId, finalArrayList).remove();
+                });
+                ids = new ArrayList<>(6001);
+                futures.add(future);
+            }
+
+        }
+        if (ids.size() > 0) {
+            postService.removeBatchByIds(ids);
+            postGroupService.lambdaUpdate().in(PostGroup::getPostId, ids).remove();
+        }
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[]{})).join();
     }
 
     @Test

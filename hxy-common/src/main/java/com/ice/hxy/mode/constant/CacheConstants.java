@@ -31,9 +31,13 @@ public interface CacheConstants {
     String CAPTCHA_CODE_KEY = "image_code";
     String IS_LOGIN = "user:is:login:";
     /**
-     * 添加定时文章
+     * 添加定时文章(知识星球)
      */
-    String ADD_POST_COOKIE_JOB = "add_post_cookie_job";
+    String ADD_POST_COOKIE_JOB_ZSXQ = "add_post_cookie_job_zsxq";
+    String ADD_POST_COOKIE_JOB_XCM = "add_post_cookie_job_xcm";
+    String ADD_POST_COOKIE_JOB_bcdh = "add_post_cookie_job_bcdh";
+
+
     /**
      * 令牌前缀
      */
@@ -67,4 +71,8 @@ public interface CacheConstants {
      * 公告
      */
     String NOTICE = "notice";
+    /**
+     * 主页文章默认推荐
+     */
+    String POST_INDEX_DEFAULT = "post:index:default";
 }

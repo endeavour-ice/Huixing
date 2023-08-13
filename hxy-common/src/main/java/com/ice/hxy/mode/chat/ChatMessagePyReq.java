@@ -2,9 +2,6 @@ package com.ice.hxy.mode.chat;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import org.hibernate.validator.constraints.Length;
-
-import javax.validation.constraints.NotNull;
 
 /**
  * @Author ice
@@ -13,8 +10,7 @@ import javax.validation.constraints.NotNull;
  */
 @Data
 public class ChatMessagePyReq {
-    @NotNull
-    @Length( max = 10000,message = "消息内容过长")
+
     @ApiModelProperty("消息内容")
     private String content;
 

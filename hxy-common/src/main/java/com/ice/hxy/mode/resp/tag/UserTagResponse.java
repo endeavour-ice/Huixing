@@ -1,4 +1,4 @@
-package com.ice.hxy.mode.resp;
+package com.ice.hxy.mode.resp.tag;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;

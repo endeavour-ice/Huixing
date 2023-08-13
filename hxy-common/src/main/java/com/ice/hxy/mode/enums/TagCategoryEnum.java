@@ -14,9 +14,11 @@ public enum TagCategoryEnum {
     INDEX(4, "主页"),
     TEAM_POST(999, "队伍文章");
     private final long value;
+    private final String dec;
 
     TagCategoryEnum(int value,String dec) {
         this.value = value;
+        this.dec = dec;
     }
 
     public long getValue() {
@@ -34,5 +36,9 @@ public enum TagCategoryEnum {
             }
         }
         return COMMON;
+    }
+
+    public String getDec() {
+        return dec;
     }
 }

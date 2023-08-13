@@ -76,7 +76,7 @@ public class User implements Serializable {
     private Integer userStatus;
 
     @ApiModelProperty("用户角色 ,判断是否是管理员")
-    private Integer role;
+    private String role;
 
     @ApiModelProperty("成员编号")
     private String planetCode;

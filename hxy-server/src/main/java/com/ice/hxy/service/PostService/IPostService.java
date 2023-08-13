@@ -22,24 +22,60 @@ import java.util.Map;
  * @since 2023-02-13
  */
 public interface IPostService extends IService<Post> {
-
+    /**
+     * 添加文章
+     * @param postRequest
+     * @param file
+     * @return
+     */
     B<Boolean> addPost(AddPostRequest postRequest, MultipartFile file);
 
-
+    /**
+     * 点赞
+     * @param postDoThumbRequest
+     * @return
+     */
     B<Boolean> doThumb(PostDoThumbRequest postDoThumbRequest);
 
+    /**
+     * 收藏
+     * @param postDoThumbRequest
+     * @return
+     */
     B<Boolean> doCollect(PostDoThumbRequest postDoThumbRequest);
 
+    /**
+     * 评论
+     * @param commentRequest
+     * @return
+     */
     B<Boolean> doComment(AddCommentRequest commentRequest);
 
+    /**
+     * 删除文章
+     * @param idRequest
+     * @return
+     */
     B<Boolean> delPost(IdRequest idRequest);
 
+    /**
+     * 获取获取收藏数
+     * @return
+     */
     B<Map<String, Object>> getPostByCollection();
 
+    /**
+     * 更具id获取文章
+     * @param postId
+     * @return
+     */
+    B<PostVo> findPostById(Long postId);
 
-    B<PostVo> getPost(Long postId);
-
-    B<List<PostVo>> getPostByCollect();
+    /**
+     * 根据收藏获取文章
+     * @return
+     */
+    B<List<PostVo>> findPostByCollect();
 
     B<List<PostVo>> searchPost(SearchPostRequest searchPostRequest);
 

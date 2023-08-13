@@ -1,6 +1,5 @@
 package com.ice.hxy.controller.LogController;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.ice.hxy.annotation.RedissonLock;
 import com.ice.hxy.common.B;
@@ -53,20 +52,21 @@ public class OpLogController {
         long pageNum = logRequest.getCurrent();
         long pageSize = logRequest.getSize();
         Page<OpLog> page = new Page<>(pageNum, pageSize);
-        QueryWrapper<OpLog> wrapper = new QueryWrapper<>();
         String name = logRequest.getName();
         Long exTime = logRequest.getExTime();
         LocalDateTime opTime = logRequest.getOpTime();
         boolean error = logRequest.isError();
-        wrapper.and(StringUtils.hasText(name), w -> w.like("op_name", name))
-                .and(exTime > 0, w -> wrapper.ge("ex_time", exTime))
+        Page<OpLog> opLogPage = logService.lambdaQuery()
+                .and(StringUtils.hasText(name), w -> w.like(OpLog::getOpName, name))
+                .and(exTime > 0, w -> w.ge(OpLog::getExTime, exTime))
                 .and(opTime != null, w -> {
                     if (opTime != null) {
-                        w.ge("op_time", opTime.with(LocalTime.MIN))
-                                .and(wq -> wq.lt("op_time", opTime.with(LocalTime.MAX)));
+                        w.ge(OpLog::getOpTime, opTime.with(LocalTime.MIN))
+                                .and(wq -> wq.lt(OpLog::getOpTime, opTime.with(LocalTime.MAX)));
                     }
-                }).and(error, w -> w.eq("status", 1));
-        Page<OpLog> opLogPage = logService.page(page, wrapper);
+                }).and(error, w -> w.eq(OpLog::getStatus, 1))
+                .orderByDesc(OpLog::getOpTime)
+                .page(page);
         return B.ok(opLogPage);
     }
 

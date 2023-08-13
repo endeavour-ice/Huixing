@@ -72,11 +72,7 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public B<ChatMessageResp> sendMsg(ChatMessagePyReq request) {
         if (ChatMessagePyReqEmpty(request)) {
-            return B.parameter();
-        }
-        String content = request.getContent();
-        if (!StringUtils.hasText(content)) {
-            return B.parameter("发送的消息为空");
+            return B.parameter("消息内容错误");
         }
         Long pyId = request.getAcceptId();
         User loginUser = UserUtils.getLoginUser();
@@ -90,13 +86,10 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public B<ChatMessageResp> sendGPT(ChatMessagePyReq request) {
-        if (request == null) {
-            return B.parameter();
+        if (ChatMessagePyReqEmpty(request)) {
+            return B.parameter("消息内容错误");
         }
         String content = request.getContent();
-        if (!StringUtils.hasText(content)) {
-            return B.parameter("发送的消息为空");
-        }
         User loginUser = UserUtils.getLoginUser();
         Long loginUserId = loginUser.getId();
         ChatMessageResp msgResp = getMsgResp(loginUser, request);
@@ -110,7 +103,7 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public B<ChatMessageResp> sendTeam(ChatMessagePyReq request) {
         if (ChatMessagePyReqEmpty(request)) {
-            return B.parameter();
+            return B.parameter("消息内容错误");
         }
         User loginUser = UserUtils.getLoginUser();
         Long teamId = request.getAcceptId();
@@ -346,13 +339,21 @@ public class ChatServiceImpl implements ChatService {
             return true;
         }
         String content = chatMessagePyReq.getContent();
+        Long acceptId = chatMessagePyReq.getAcceptId();
+        Long replyMsgId = chatMessagePyReq.getReplyMsgId();
         if (!StringUtils.hasText(content)) {
             return true;
         }
         if (content.length() > 10000) {
             return true;
         }
-        return LongUtil.isEmpty(chatMessagePyReq.getAcceptId());
+        if (acceptId != null) {
+            return acceptId <= 0;
+        }
+        if (replyMsgId != null) {
+            return replyMsgId <= 0;
+        }
+        return false;
     }
 
 

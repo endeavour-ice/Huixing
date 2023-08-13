@@ -276,5 +276,8 @@
         <include refid="postCursor"/>
         order by p.view_num desc limit #{current},#{size}
     </select>
+    <select id="selectPostByRDM" resultMap="postVo">
+        <include refid="postCursor"/> limit #{current},#{size}
+    </select>
 
 </mapper>

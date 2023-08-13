@@ -48,6 +48,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -117,7 +118,6 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
         String sensitive = SensitiveUtils.sensitive(content);
         if (LongUtil.isEmpty(groupId)) {
             groupId = PostGroupEnum.INDEX.getValue();
-
         } else {
             if (!teamService.isUserTeam(groupId, userId)) {
                 return B.parameter("未加入该队伍");
@@ -167,6 +167,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
         if (StringUtils.hasText(postRequestTag)) {
             rabbitService.saveTag(userId, groupId, postRequestTag);
         }
+        redisCache.deleteObject(CacheConstants.POST_TOTAL + groupId);
         return B.ok();
     }
 
@@ -545,25 +546,14 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
             if (!loginUserId.equals(userId) && !UserRole.isAdmin(loginUser)) {
                 return B.auth();
             }
-            QueryWrapper<PostThumb> thumbQueryWrapper = new QueryWrapper<>();
-            thumbQueryWrapper.eq("post_id", id);
-            thumbService.remove(thumbQueryWrapper);
-            QueryWrapper<PostCollect> postCollectQueryWrapper = new QueryWrapper<>();
-            postCollectQueryWrapper.eq("post_id", id);
-            collectService.remove(postCollectQueryWrapper);
-            QueryWrapper<PostComment> commentQueryWrapper = new QueryWrapper<>();
-            commentQueryWrapper.eq("post_id", id);
-            commentService.remove(commentQueryWrapper);
-            boolean remove = this.removeById(id);
-            if (!remove) {
-                throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION, "删除失败");
-            }
-            QueryWrapper<PostGroup> postGroupQueryWrapper = new QueryWrapper<>();
-            postGroupQueryWrapper.eq("post_id", id);
-            remove = postGroupService.remove(postGroupQueryWrapper);
-            if (!remove) {
-                throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION, "删除失败");
-            }
+            thumbService.lambdaUpdate().eq(PostThumb::getPostId, id).remove();
+            collectService.lambdaUpdate().eq(PostCollect::getPostId, id).remove();
+            commentService.lambdaUpdate().eq(PostComment::getPostId, id).remove();
+            if (!this.removeById(id)) throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION, "删除失败");
+            PostGroup postGroup = postGroupService.lambdaQuery().eq(PostGroup::getPostId, id).one();
+            if (postGroup == null) return B.parameter();
+            if (!postGroupService.removeById(postGroup)) throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION, "删除失败");
+            redisCache.deleteObject(CacheConstants.POST_TOTAL + postGroup.getGroupId());
         }
 
         return B.ok();
@@ -611,7 +601,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
     }
 
     @Override
-    public B<PostVo> getPost(Long postId) {
+    public B<PostVo> findPostById(Long postId) {
         if (LongUtil.isEmpty(postId)) {
             return B.parameter();
         }
@@ -622,7 +612,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
         }
         Long userId = loginUser.getId();
         Long groupId = postVo.getGroupId();
-        if (groupId != 0) {
+        if (groupId != 0L&&groupId!=1L) {
             if (!isUserTeam(userId, groupId)) {
                 return B.parameter();
             }
@@ -661,7 +651,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
      * @return
      */
     @Override
-    public B<List<PostVo>> getPostByCollect() {
+    public B<List<PostVo>> findPostByCollect() {
         User loginUser = UserUtils.getLoginUser();
         Long userId = loginUser.getId();
         return B.ok(baseMapper.selectPostCollectByUserId(userId));
@@ -855,20 +845,15 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
         if (!userId.equals(teamUserId) || !UserRole.isAdmin()) {
             return false;
         }
-        QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
-        userTeamQueryWrapper.eq("team_id", teamId);
-        boolean remove = userTeamService.remove(userTeamQueryWrapper);
-        if (!remove) {
+        if (!userTeamService.lambdaUpdate().eq(UserTeam::getTeamId, teamId).remove()) {
             throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION, "删除失败");
         }
         QueryWrapper<Team> teamQueryWrapper = new QueryWrapper<>();
         teamQueryWrapper.eq("user_id", userId).and(wrapper -> wrapper.eq("id", teamId));
-        boolean b = teamService.remove(teamQueryWrapper);
-        if (!b) {
+        if (!teamService.remove(teamQueryWrapper)) {
             throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION, "删除失败");
         }
-        boolean record = teamChatRecordService.deleteTeamChatRecordByTeamId(teamId);
-        if (!record) {
+        if (!teamChatRecordService.deleteTeamChatRecordByTeamId(teamId)) {
             throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION, "删除失败");
         }
         if (teamId == 0) {
@@ -876,24 +861,20 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
         }
         List<String> postIds = baseMapper.selectPostIdsByGroupId(teamId);
         if (!CollectionUtils.isEmpty(postIds)) {
-            boolean batchByIds = this.removeBatchByIds(postIds);
-            if (!batchByIds) {
+            if (!this.removeBatchByIds(postIds)) {
                 throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION, "删除失败");
             }
-            boolean t = thumbService.removeListByPostId(postIds);
-            if (!t) {
+            if (!thumbService.removeListByPostId(postIds)) {
                 throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION, "删除失败");
             }
-            boolean c = collectService.removeListByPostId(postIds);
-            if (!c) {
+            if (!collectService.removeListByPostId(postIds)) {
                 throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION, "删除失败");
             }
-            boolean m = commentService.removeListByPostId(postIds);
-            if (!m) {
+            if (!commentService.removeListByPostId(postIds)) {
                 throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION, "删除失败");
             }
         }
-
+        redisCache.deleteObject(CacheConstants.POST_TOTAL + teamId);
         return true;
     }
 
@@ -948,6 +929,24 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
         return buildPostPage(postVos, groupId, userId, pageFilter);
     }
 
+    public long findPostCountByGroup(Long groupId) {
+        String key = CacheConstants.POST_TOTAL + groupId;
+        long total;
+        if (redisCache.hasKey(key)) {
+            total = redisCache.getCacheObject(key);
+            if (total == 0) {
+                total = postGroupService.lambdaQuery().eq(PostGroup::getGroupId, groupId).count();
+                if (total != 0) {
+                    redisCache.setCacheObject(key, total, 1L, TimeUnit.DAYS);
+                }
+            }
+        } else {
+            total = postGroupService.lambdaQuery().eq(PostGroup::getGroupId, groupId).count();
+            redisCache.setCacheObject(key, total, 1L, TimeUnit.DAYS);
+        }
+        return total;
+    }
+
     /**
      * 构建Page
      *
@@ -960,7 +959,12 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
         if (LongUtil.isEmpty(groupId)) {
             groupId = PostGroupEnum.INDEX.getValue();
         }
-        long total = baseMapper.selectCountByGroupIdUserId(groupId, userId);
+        long total = 0;
+        if (LongUtil.isEmpty(userId)) {
+            total = findPostCountByGroup(groupId);
+        } else {
+            total = baseMapper.selectCountByGroupIdUserId(groupId, userId);
+        }
         return new PageResp<>(!PageUtil.hasNext(pageFilter.getCurrent(), pageFilter.getSize(), total), postVos);
     }
 
@@ -971,13 +975,13 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
     /**
      * 查询 post list
      *
-     * @param Scope      查询的范围
+     * @param scope      查询的范围
      * @param pageFilter 页面
      * @param groupId    分组Id
      * @param userId     是否查询登录的用户
      * @return PostVo
      */
-    public List<PostVo> buildPostSorted(String Scope, Long groupId, PageFilter pageFilter, Long userId) {
+    public List<PostVo> buildPostSorted(String scope, Long groupId, PageFilter pageFilter, Long userId) {
         if (LongUtil.isEmpty(groupId)) {
             groupId = PostGroupEnum.INDEX.getValue();
         }
@@ -987,12 +991,29 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
                 throw new GlobalException(ErrorCode.PARAMS_ERROR);
             }
         }
+        String d = "";
+        if (groupId.equals(PostGroupEnum.INDEX.getValue())
+                && redisCache.hasKey(CacheConstants.POST_INDEX_DEFAULT)
+                &&LongUtil.isEmpty(userId)) {
+            d = redisCache.getCacheObject(CacheConstants.POST_INDEX_DEFAULT);
+        }
         List<PostVo> postVos;
-        PostSortedEnum postSortedEnum = PostSortedEnum.isScope(Scope);
+        PostSortedEnum postSortedEnum = PostSortedEnum.isScope(scope, d);
         if (pageFilter == null) {
             pageFilter = new PageFilter();
         }
+        if (scope.equals("xj")) {
+            groupId = 1L;
+        }
         switch (postSortedEnum) {
+            case RANDOM:
+                long total = findPostCountByGroup(groupId);
+                if (total > 50) {
+                    postVos = getPostPageByRandom(groupId, total, pageFilter.getSize());
+                } else {
+                    postVos = getPostPageByDESC(groupId, userId, pageFilter.getCurrent(), pageFilter.getSize());
+                }
+                break;
             // 最新
             case DESC:
                 postVos = getPostPageByDESC(groupId, userId, pageFilter.getCurrent(), pageFilter.getSize());
@@ -1014,10 +1035,15 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
                 postVos = getPostPageByHot(groupId, userId, pageFilter.getCurrent(), pageFilter.getSize());
                 break;
             default:
-                log.error("buildPostSorted 参数错误 error: Scope=>{},postSortedEnum=>{}", Scope, postSortedEnum);
+                log.error("buildPostSorted 参数错误 error: Scope=>{},postSortedEnum=>{}", scope, postSortedEnum);
                 throw new GlobalException(ErrorCode.SYSTEM_EXCEPTION);
         }
         return postVos;
+    }
+
+    private List<PostVo> getPostPageByRandom(Long groupId, long total, long size) {
+        Random random = new Random();
+        return baseMapper.selectPostByRDM(groupId, null, random.nextInt((int) (total - size)), size);
     }
 
     private List<PostVo> getPostPageByDESC(Long groupId, Long userId, long current, long size) {

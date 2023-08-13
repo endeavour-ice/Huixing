@@ -60,6 +60,7 @@ public class UserController {
 
     // 用户登录
     @PostMapping("/login")
+    @CurrentLimiting
     public B<String> userLogin(@RequestBody UserLoginRequest userLogin, HttpServletRequest request) {
         return userService.userLogin(userLogin, request);
     }
@@ -134,7 +135,7 @@ public class UserController {
 
     // 搜索用户
     @PostMapping("/search")
-    public B<Page<SafetyUserResponse>> searchUserName(@RequestBody UserSearchPage userSearchPage) {
+    public B<Page<SafetyUserResponse>> searchUserName( @RequestBody UserSearchPage userSearchPage) {
         return userService.friendUserName(userSearchPage);
     }
 
@@ -165,11 +166,7 @@ public class UserController {
         return userService.getUserVoByNameOrId(idNameRequest);
     }
 
-    // 用户登录
-    @PostMapping("/admin/Login")
-    public B<String> userAdminLogin(@RequestBody UserLoginRequest userLogin, HttpServletRequest request) {
-        return userService.userAdminLogin(userLogin);
-    }
+
 
     /**
      * 获取当前的登录信息

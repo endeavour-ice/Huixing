@@ -60,7 +60,7 @@ public class PostController {
 
     @GetMapping("/get")
     public B<PostVo> getPostById(@RequestParam Long postId) {
-        return postService.getPost(postId);
+        return postService.findPostById(postId);
     }
 
     @GetMapping("/col")
@@ -95,7 +95,7 @@ public class PostController {
 
     @GetMapping("/collect")
     public B<List<PostVo>> getPostByCollect() {
-        return postService.getPostByCollect();
+        return postService.findPostByCollect();
     }
 
     @PostMapping("/record")

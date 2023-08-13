@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -39,19 +38,19 @@ public class ChatController {
     }
     @PostMapping("/send")
     @CurrentLimiting
-    public B<ChatMessageResp> sendMsg(@Valid @RequestBody ChatMessagePyReq request) {
+    public B<ChatMessageResp> sendMsg( @RequestBody ChatMessagePyReq request) {
         return chatService.sendMsg(request);
     }
 
     @PostMapping("/gpt/send")
     @CurrentLimiting
-    public B<ChatMessageResp> sendGPTMsg(@Valid @RequestBody ChatMessagePyReq request) {
+    public B<ChatMessageResp> sendGPTMsg( @RequestBody ChatMessagePyReq request) {
         return chatService.sendGPT(request);
     }
 
     @PostMapping("/team/send")
     @CurrentLimiting
-    public B<ChatMessageResp> send(@Valid @RequestBody ChatMessagePyReq request) {
+    public B<ChatMessageResp> send( @RequestBody ChatMessagePyReq request) {
         return chatService.sendTeam(request);
     }
 }

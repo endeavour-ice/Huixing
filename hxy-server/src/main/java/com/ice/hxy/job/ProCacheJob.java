@@ -4,6 +4,7 @@ package com.ice.hxy.job;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
+import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -85,11 +86,10 @@ public class ProCacheJob {
     }
 
 
-    public void postZsxq() {
+    public void postZsxq(String cookie) {
         Set<Long> uids = userService.list().stream().map(User::getId).collect(Collectors.toSet());
         Set<Long> pids = postService.list().stream().map(Post::getId).collect(Collectors.toSet());
-        String cookie = redisCache.getCacheObject(CacheConstants.ADD_POST_COOKIE_JOB);
-        String url = "https://api.zsxq.com/v2/groups/51122858222824/topics?scope=all&count=20&end_time=2022-07-04T11%3A45%3A08.609%2B0800";
+        String url = "https://api.zsxq.com/v2/groups/48412112825828/topics?scope=all&count=20&end_time=2023-08-03T18%3A27%3A13.338%2B0800";
         int i = 0;
         Random random = new Random();
         do {
@@ -98,17 +98,17 @@ public class ProCacheJob {
             try {
                 parse = parse(body, cookie, uids, pids, url);
                 if (parse == null) {
-                    int L = random.nextInt(5)+2 ;
+                    int L = random.nextInt(5) + 2;
                     Threads.sleep(L);
                     continue;
                 }
-                url = "https://api.zsxq.com/v2/groups/51122858222824/topics?scope=all&count=20" + "&end_time=" + URLEncoder.encode(parse, "UTF-8");
+                url = "https://api.zsxq.com/v2/groups/48412112825828/topics?scope=all&count=20" + "&end_time=" + URLEncoder.encode(parse, "UTF-8");
             } catch (Exception e) {
                 log.error("error:{}", e.getMessage());
                 continue;
             }
             i++;
-            int L = random.nextInt(5) ;
+            int L = random.nextInt(5);
             Threads.sleep(L);
         } while (true);
 
@@ -172,7 +172,7 @@ public class ProCacheJob {
                 uids.add(user_id);
             }
 
-            if (!LongUtil.isEmpty(topic_id) && !pids.contains(topic_id)&&!LongUtil.isEmpty(user_id)) {
+            if (!LongUtil.isEmpty(topic_id) && !pids.contains(topic_id) && !LongUtil.isEmpty(user_id)) {
                 Post post = new Post();
                 post.setId(topic_id);
                 post.setUserId(user_id);
@@ -210,11 +210,11 @@ public class ProCacheJob {
     }
 
     public void postJob() {
-        if (!redisCache.hasKey(CacheConstants.ADD_POST_COOKIE_JOB)) {
+        if (!redisCache.hasKey(CacheConstants.ADD_POST_COOKIE_JOB_ZSXQ)) {
             log.error("请先添加cookie");
             return;
         }
-        String cookie = redisCache.getCacheObject(CacheConstants.ADD_POST_COOKIE_JOB);
+        String cookie = redisCache.getCacheObject(CacheConstants.ADD_POST_COOKIE_JOB_ZSXQ);
         if (!StringUtils.hasText(cookie)) {
             log.error("cookie错误");
             return;
@@ -341,11 +341,11 @@ public class ProCacheJob {
 
     public void addZSXQPost() {
         Random random = new Random();
-        if (!redisCache.hasKey(CacheConstants.ADD_POST_COOKIE_JOB)) {
+        if (!redisCache.hasKey(CacheConstants.ADD_POST_COOKIE_JOB_ZSXQ)) {
             log.error("请先添加cookie");
             return;
         }
-        String cookie = redisCache.getCacheObject(CacheConstants.ADD_POST_COOKIE_JOB);
+        String cookie = redisCache.getCacheObject(CacheConstants.ADD_POST_COOKIE_JOB_ZSXQ);
         if (!StringUtils.hasText(cookie)) {
             log.error("cookie错误");
             return;
@@ -661,15 +661,15 @@ public class ProCacheJob {
 
     }
 
-    public static void main(String[] args) {
-        HttpResponse request = HttpRequest.get("https://programmercarl.com/")
-                .header("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36")
-                .cookie("zsxq_access_token=FB4DDE37-4083-993C-6771-41B5D413FF62_3D3D5B55454C1F1C; sensorsdata2015jssdkcross=%7B%22distinct_id%22%3A%22818512224112252%22%2C%22first_id%22%3A%221881e2a58cd9e-0a22e7e8f6a8b3-26031a51-1327104-1881e2a58ce87f%22%2C%22props%22%3A%7B%7D%2C%22identities%22%3A%22eyIkaWRlbnRpdHlfY29va2llX2lkIjoiMTg4MWUyYTU4Y2Q5ZS0wYTIyZTdlOGY2YThiMy0yNjAzMWE1MS0xMzI3MTA0LTE4ODFlMmE1OGNlODdmIiwiJGlkZW50aXR5X2xvZ2luX2lkIjoiODE4NTEyMjI0MTEyMjUyIn0%3D%22%2C%22history_login_id%22%3A%7B%22name%22%3A%22%24identity_login_id%22%2C%22value%22%3A%22818512224112252%22%7D%2C%22%24device_id%22%3A%221881e2a58cd9e-0a22e7e8f6a8b3-26031a51-1327104-1881e2a58ce87f%22%7D; abtest_env=product")
-                .execute();
-        System.out.println(request.body());
-
-
-
+    public static void main(String[] args) throws Exception {
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("page",1);
+        paramMap.put("type", "all");
+        paramMap.put("load_type", "ajax");
+        paramMap.put("index", 0);
+        String s = HttpUtil.get("https://www.xcng.cn/wp-content/module/public/gadget/LS-SYZQ-S/data.php", paramMap);
+        System.out.println(s);
+        Document document = Jsoup.parse(s);
     }
 
 }

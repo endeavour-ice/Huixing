@@ -67,4 +67,6 @@ public interface PostMapper extends BaseMapper<Post> {
     List<PostVo> getPostPageByCOMMENT(@Param("groupId") Long groupId,@Param("userId") Long userId, @Param("current") long current, @Param("size") long size);
 
     List<PostVo> getPostPageByHot(@Param("groupId") Long groupId,@Param("userId") Long userId, @Param("current") long current, @Param("size") long size);
+
+    List<PostVo> selectPostByRDM(@Param("groupId") Long groupId,@Param("userId") Long userId,@Param("current") long current, @Param("size") long size);
 }

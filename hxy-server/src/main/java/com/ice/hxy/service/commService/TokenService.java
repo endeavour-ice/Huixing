@@ -33,11 +33,11 @@ public class TokenService {
     private static final long MILLISECOND = 60000;
     private static final long DAY_TIME = 24 * 60 * MILLISECOND;
     // 令牌有效期（默认5天）
-    private static final long EXPIRE_TIME = 5 * DAY_TIME;
+    private static final long EXPIRE_TIME = 3 * DAY_TIME;
     // 四天
-    private static final long MILLIS_MINUTE_TEN = 4 * DAY_TIME;
+    private static final long MILLIS_MINUTE_TEN = 2 * DAY_TIME;
     // 刷新token时间
-    private static final long REFRESH_TIME = EXPIRE_TIME ;
+    private static final long REFRESH_TIME = MILLIS_MINUTE_TEN ;
 
     @Autowired
     private RedisCache redisCache;

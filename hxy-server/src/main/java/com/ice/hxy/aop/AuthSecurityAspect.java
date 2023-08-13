@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 public class AuthSecurityAspect {
     @Resource
     private TokenService tokenService;
+
     //  权限控制
     @Around(value = "@annotation(authSecurity)")// 注解标注的
     public Object doAuth(ProceedingJoinPoint pjp, AuthSecurity authSecurity) throws Throwable {
@@ -46,14 +47,14 @@ public class AuthSecurityAspect {
         if (loginUser == null) {
             return B.error(ErrorCode.NO_LOGIN);
         }
-        Integer userRole = loginUser.getRole();
-        UserRole[] role = authSecurity.isRole();
-
+        String userRole = loginUser.getRole();
         UserRole[] noRole = authSecurity.isNoRole();
+        UserRole[] role = authSecurity.isRole();
         if (role.length > 0) {
             boolean is = false;
             for (UserRole r : role) {
-                if (r.getKey() == userRole) {
+                String key = r.getKey();
+                if (key.equals(userRole)||userRole.equals(UserRole.ROOT.getKey())) {
                     is = true;
                     break;
                 }
@@ -65,7 +66,7 @@ public class AuthSecurityAspect {
         if (noRole.length > 0) {
             boolean is = false;
             for (UserRole r : noRole) {
-                if (r.getKey() == userRole) {
+                if (r.getKey().equals(userRole)) {
                     is = true;
                     break;
                 }
@@ -79,7 +80,6 @@ public class AuthSecurityAspect {
     }
 
     /**
-     *
      * @param point
      * @return
      * @throws Throwable

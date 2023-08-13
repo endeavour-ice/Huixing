@@ -5,15 +5,10 @@ import com.ice.hxy.annotation.CurrentLimiting;
 import com.ice.hxy.common.B;
 import com.ice.hxy.mode.comm.ChinesePoetry;
 import com.ice.hxy.mode.constant.CacheConstants;
-import com.ice.hxy.mode.entity.User;
-import com.ice.hxy.mode.enums.UserRole;
 import com.ice.hxy.service.commService.RedisCache;
 import com.ice.hxy.util.ChinesePoetryUtil;
-import com.ice.hxy.util.UserUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -56,17 +51,5 @@ public class UserNoticeController {
         }
     }
 
-    @PostMapping("/save")
-    public B<Void> save(String notice) {
-        User loginUser = UserUtils.getLoginUser();
-        if (!StringUtils.hasText(notice)) {
-            return B.parameter();
-        }
 
-        if (!UserRole.isAdmin(loginUser)) {
-            return B.auth();
-        }
-        redisCache.setCacheObject(CacheConstants.NOTICE, notice);
-        return B.ok();
-    }
 }
