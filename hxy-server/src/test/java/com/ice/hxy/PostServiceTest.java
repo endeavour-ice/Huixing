@@ -170,6 +170,18 @@ public class PostServiceTest {
         System.out.println(saveBatch);
         System.out.println(updateBatchById);
     }
+    @Test
+    void upUrl() {
+        List<Post> list = postService.lambdaQuery().like(Post::getContent, "http").list();
+        for (Post post : list) {
+            String str = post.getContent();
+            str = str.replace("%3A", ":");
+            str = str.replace("%2F", "/");
+            str = str.replace("\n", "<br/>");
+            post.setContent(str);
+        }
+        postService.updateBatchById(list);
+    }
 
 
 }

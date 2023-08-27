@@ -6,6 +6,7 @@ import com.ice.hxy.mode.constant.CacheConstants;
 import com.ice.hxy.mode.enums.UserRole;
 import com.ice.hxy.mode.request.admin.NoticeReq;
 import com.ice.hxy.mode.request.admin.PostCookie;
+import com.ice.hxy.mode.request.admin.PostZSReq;
 import com.ice.hxy.mode.resp.admin.PostSortedResp;
 import com.ice.hxy.mode.resp.tag.TagResp;
 import com.ice.hxy.service.admin.SystemService;
@@ -98,5 +99,17 @@ public class SystemConfig {
     @AuthSecurity(isRole = {UserRole.ROOT})
     public B<List<PostSortedResp>> getDefaultPostIndex() {
         return systemService.getDefaultPostIndex();
+    }
+
+    @GetMapping("/up/str")
+    @AuthSecurity(isRole = {UserRole.ROOT})
+    public B<Void> upStr() {
+        return systemService.upStr();
+    }
+
+    @PostMapping("/pq/zsxq")
+    @AuthSecurity(isRole = {UserRole.ROOT})
+    public B<Void> pqZS(@RequestBody PostZSReq postZSReq) {
+        return systemService.pqZS(postZSReq);
     }
 }

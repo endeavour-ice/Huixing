@@ -3,6 +3,7 @@ package com.ice.hxy.service.admin;
 import com.ice.hxy.common.B;
 import com.ice.hxy.mode.request.admin.NoticeReq;
 import com.ice.hxy.mode.request.admin.PostCookie;
+import com.ice.hxy.mode.request.admin.PostZSReq;
 import com.ice.hxy.mode.resp.admin.PostSortedResp;
 import com.ice.hxy.mode.resp.tag.TagResp;
 
@@ -39,4 +40,7 @@ public interface SystemService {
 
     B<List<PostSortedResp>> getDefaultPostIndex();
 
+    B<Void> upStr();
+
+    B<Void> pqZS(PostZSReq postZSReq);
 }

@@ -10,13 +10,11 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.ice.hxy.mode.constant.CacheConstants;
-import com.ice.hxy.mode.entity.Image;
-import com.ice.hxy.mode.entity.Post;
-import com.ice.hxy.mode.entity.Tags;
-import com.ice.hxy.mode.entity.User;
+import com.ice.hxy.mode.entity.*;
 import com.ice.hxy.mode.enums.UserStatus;
 import com.ice.hxy.service.PostService.IImageService;
 import com.ice.hxy.service.PostService.IPostService;
+import com.ice.hxy.service.PostService.PostGroupService;
 import com.ice.hxy.service.TagService.TagsService;
 import com.ice.hxy.service.UserService.IUserService;
 import com.ice.hxy.service.commService.HttpService;
@@ -29,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -60,6 +59,9 @@ public class ProCacheJob {
     @Resource
     private HttpService httpService;
 
+    @Autowired
+    private PostGroupService groupService;
+
     private static List<Image> imageList = null;
     private static List<String> list = Arrays.asList("Java", "C++", "C", "Python", "PHP", "前端", "GO");
 
@@ -86,128 +88,6 @@ public class ProCacheJob {
     }
 
 
-    public void postZsxq(String cookie) {
-        Set<Long> uids = userService.list().stream().map(User::getId).collect(Collectors.toSet());
-        Set<Long> pids = postService.list().stream().map(Post::getId).collect(Collectors.toSet());
-        String url = "https://api.zsxq.com/v2/groups/48412112825828/topics?scope=all&count=20&end_time=2023-08-03T18%3A27%3A13.338%2B0800";
-        int i = 0;
-        Random random = new Random();
-        do {
-            String body = getUrl(url, cookie);
-            String parse;
-            try {
-                parse = parse(body, cookie, uids, pids, url);
-                if (parse == null) {
-                    int L = random.nextInt(5) + 2;
-                    Threads.sleep(L);
-                    continue;
-                }
-                url = "https://api.zsxq.com/v2/groups/48412112825828/topics?scope=all&count=20" + "&end_time=" + URLEncoder.encode(parse, "UTF-8");
-            } catch (Exception e) {
-                log.error("error:{}", e.getMessage());
-                continue;
-            }
-            i++;
-            int L = random.nextInt(5);
-            Threads.sleep(L);
-        } while (true);
-
-
-    }
-
-    public String parse(String body, String cookie, Set<Long> uids, Set<Long> pids, String url) {
-        JSONObject parseObj = JSONUtil.parseObj(body);
-        Integer code = parseObj.getInt("code");
-        if (code != null) {
-            return null;
-        }
-        String resp_data = parseObj.get("resp_data", String.class);
-        JSONObject obj = JSONUtil.parseObj(resp_data);
-        Object topics = obj.get("topics");
-        JSONArray objects = JSONUtil.parseArray(topics);
-        Set<User> users = new HashSet<>(objects.size() + 1);
-        Set<Post> posts = new HashSet<>(objects.size() + 1);
-        String end_time = null;
-        for (int i = 0; i <= objects.size() - 1; i++) {
-            Object object = objects.get(i);
-            JSONObject jsonObject = JSONUtil.parseObj(object);
-            Long topic_id = jsonObject.getLong("topic_id");
-            if (i == objects.size() - 1) {
-                end_time = jsonObject.getStr("create_time");
-            }
-            String talk = jsonObject.get("talk", String.class);
-            JSONObject entries = JSONUtil.parseObj(talk);
-            String text = entries.get("text", String.class);
-            String owner = entries.get("owner", String.class);
-            JSONObject ow = JSONUtil.parseObj(owner);
-            Long user_id = ow.getLong("user_id");
-            String name = ow.get("name", String.class);
-            String avatar_url = ow.get("avatar_url", String.class);
-            String article = entries.getStr("article");
-            if (StringUtils.hasText(article)) {
-                JSONObject entries1 = JSONUtil.parseObj(article);
-                String inline_article_url = entries1.getStr("inline_article_url");
-                if (StringUtils.hasText(inline_article_url)) {
-                    Document document = Jsoup.parse(getUrl(inline_article_url, cookie));
-                    Elements content = document.getElementsByClass("content");
-                    text = content.html();
-                }
-            }
-            Set<String> strings = new HashSet<>();
-            for (int j = 0; j < RandomUtil.randomInt(0, ProCacheJob.list.size()); j++) {
-                int randomInt = RandomUtil.randomInt(0, ProCacheJob.list.size());
-                strings.add(ProCacheJob.list.get(randomInt));
-            }
-            if (!LongUtil.isEmpty(user_id) && !uids.contains(user_id)) {
-                User user = new User();
-                user.setId(user_id);
-                user.setUsername(name);
-                user.setUserAccount(name);
-                user.setAvatarUrl(avatar_url);
-                user.setTags(GsonUtils.getGson().toJson(strings));
-                user.setGender("男");
-                user.setPassword("12f1b52ae343c200f385276446a7d1e6");
-                user.setUserStatus(UserStatus.NORMAL.getKey());
-                users.add(user);
-                uids.add(user_id);
-            }
-
-            if (!LongUtil.isEmpty(topic_id) && !pids.contains(topic_id) && !LongUtil.isEmpty(user_id)) {
-                Post post = new Post();
-                post.setId(topic_id);
-                post.setUserId(user_id);
-                post.setContent(text);
-                posts.add(post);
-                pids.add(topic_id);
-            }
-        }
-        boolean saveBatch = userService.saveBatch(users);
-        boolean batch = postService.saveBatch(posts);
-        log.info("post:{} num:{}  user:{} num:{} url:{}", batch, posts.size(), saveBatch, posts.size(), url);
-
-        return end_time;
-    }
-
-    public String getUrl(String url, String cookie) {
-        HttpResponse request = HttpRequest.get(url)
-                .header("content-type", "application/json; charset=UTF-8")
-                .header("access-control-allow-origin", "https://wx.zsxq.com")
-                .header("origin", "https://wx.zsxq.com")
-                .header("host", "api.zsxq.com")
-                .header("accept", "application/json, text/plain, */*")
-                .header("x-request-id", "283659b62-a277-a90f-ffaa-e1ff333875a")
-                .header("x-expire-in", "2591996")
-                .header("x-signature", "9f4d2bd0f722d7890d6eacedc2057d2acf3eba6f-")
-                .header("x-timestamp", String.valueOf(new Date().getTime() / 1000))
-                .header("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36")
-                .cookie(cookie)
-                .execute();
-        byte[] bytes = request.bodyBytes();
-        return new String(bytes, StandardCharsets.UTF_8);
-
-        //return httpService.get(url, httpHeaders, String.class).getBody();
-
-    }
 
     public void postJob() {
         if (!redisCache.hasKey(CacheConstants.ADD_POST_COOKIE_JOB_ZSXQ)) {
@@ -663,7 +543,7 @@ public class ProCacheJob {
 
     public static void main(String[] args) throws Exception {
         Map<String, Object> paramMap = new HashMap<>();
-        paramMap.put("page",1);
+        paramMap.put("page", 1);
         paramMap.put("type", "all");
         paramMap.put("load_type", "ajax");
         paramMap.put("index", 0);
